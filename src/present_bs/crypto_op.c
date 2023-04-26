@@ -15,7 +15,8 @@
   * Manual reduction of constant integer expression
     * Compiler might not reduce an expression when it's too complex to it - do it yourself to improve performance
     * e.g. 16 * 0 -> n/a, 16 * 1 -> 16, ...
-  * 
+  * TODO #1 SBOX reduction
+  * TODO #2 check and use XOR to set 0
  * @authors Doaa A., Dnyaneshwar S., Salih MSA
  */
 
