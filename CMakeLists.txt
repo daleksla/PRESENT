@@ -25,31 +25,31 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-#add_compile_options(
+add_compile_options(
 #	-Werror # it appears the SDK has a bunch of errors internally. Can't really enforce warnings->errors...
 #	-Wpedantic
-#	-Wall
-#	-Wextra
-#	-Wbad-function-cast
-#	-Wcast-align
-#	-Wcast-qual
-#	-Wfloat-equal
-#	-Wformat=2
-#	-Wlogical-op
-#	-Wnested-externs
-#	-Wpointer-arith
-#	-Wundef
-#	-Wno-pointer-compare
-#	-Wredundant-decls
-#	-Wsequence-point
-#	-Wshadow
-#	-Wstrict-prototypes 
-#	-Wswitch
-#	-Wundef 
-#	-Wunreachable-code
-#	-Wunused-but-set-parameter
-#	-Wwrite-strings
-#)
+	-Wall
+	-Wextra
+	-Wbad-function-cast
+	-Wcast-align
+	-Wcast-qual
+	-Wfloat-equal
+	-Wformat=2
+	-Wlogical-op
+	-Wnested-externs
+	-Wpointer-arith
+	-Wundef
+	-Wno-pointer-compare
+	-Wredundant-decls
+	-Wsequence-point
+	-Wshadow
+	-Wstrict-prototypes 
+	-Wswitch
+	-Wundef
+	-Wunreachable-code
+	-Wunused-but-set-parameter
+	-Wwrite-strings
+)
 include_directories(
 	include/
 )

@@ -2,8 +2,20 @@
 
 /**
  * @brief Optimised bitsliced implementation of PRESENT cryptographic algorithm
- * Optimisations:
-   * TODO
+ * Optimisations performed (note some of these are easy and done by compilers):
+  * x ^ 0xffffffff -> ~(x)
+    * `eor` requires use of 3 sources - dest reg, val1 reg, val2 flexible
+    * `mvn` (bitwise not) just needs two - dest reg, val1 reg
+    * theoretically, should be quicker
+  * Common calculations created into offset variables
+    * Less CPU time spent on needless calculations
+    * e.g. (i / 4) + (1 * 16) -> off + (1 * 16), (i / 4) + (2 * 16) -> off + (2 * 16)
+  * One-off calculations not stored in temporary variables
+    * Allows compiler to better optimise keeping values in registers and not RAM, even if it makes the code look untidy
+  * Manual reduction of constant integer expression
+    * Compiler might not reduce an expression when it's too complex to it - do it yourself to improve performance
+    * e.g. 16 * 0 -> n/a, 16 * 1 -> 16, ...
+  * 
  * @authors Doaa A., Dnyaneshwar S., Salih MSA
  */
 
@@ -116,8 +128,8 @@ static void add_round_key(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT], uint8_t roundke
 	const uint32_t bit_array[2] = {0x00000000, 0xFFFFFFFF};
 
 	for (uint8_t i = 0; i < CRYPTO_IN_SIZE_BIT; ++i) {
-		const uint8_t currentBit = (roundkey[i / 8] >> (i % 8)) & 0x1; // get current bit of current byte from roundkey
-		state_bs[i] ^= bit_array[currentBit]; // app_bit is either 0 or 1 so index `bit_array`
+		const uint8_t current_bit = get_reg_bit(roundkey[i / 8], (i % 8)); // get current bit of current byte from roundkey
+		state_bs[i] ^= bit_array[current_bit]; // app_bit is either 0 or 1 so index `bit_array`
 	}
 }
 
@@ -170,7 +182,7 @@ static void update_round_key(uint8_t key[CRYPTO_KEY_SIZE], const uint8_t r)
  * @param const bs_reg_t x3 - byte 4
  * @return bs_reg_t - result of substitution
  */
-static inline uint32_t sbox0(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t in3)
+static inline bs_reg_t sbox0(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
 	// y0 = x0 + x1 · x2 + x2 + x3
 	return in0 ^ (in1 & in2) ^ in2 ^ in3;
@@ -185,7 +197,7 @@ static inline uint32_t sbox0(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t 
  * @param const bs_reg_t x3 - byte 4
  * @return bs_reg_t - result of substitution
  */
-static inline uint32_t sbox1(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t in3)
+static inline bs_reg_t sbox1(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
 	// y1 = x0 · x2 · x1 + x0 · x3 · x1 + x3 · x1 + x1 + x0 · x2 · x3 + x2 · x3 + x3
 	return (in0 & in2 & in1) ^ (in0 & in3 & in1) ^ (in3 & in1) ^ in1 ^ (in0 & in2 & in3) ^ (in2 & in3) ^ in3;
@@ -201,10 +213,11 @@ static inline uint32_t sbox1(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t 
  * @param const bs_reg_t x3 - byte 4
  * @return bs_reg_t - result of substitution
  */
-static inline uint32_t sbox2(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t in3)
+static inline bs_reg_t sbox2(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
 	// y2 = x0 · x1 + x0 · x3 · x1 + x3 · x1 + x2 + x0 · x3 + x0 · x2 · x3 + x3 + 1
-	return ~((in0 & in1) ^ (in0 & in3 & in1) ^ (in3 & in1) ^ in2 ^ (in0 & in3) ^ (in0 & in2 & in3) ^ in3); //^ 0xffffffff;
+	return ~((in0 & in1) ^ (in0 & in3 & in1) ^ (in3 & in1) ^ in2 ^ (in0 & in3) ^ (in0 & in2 & in3) ^ in3); // NOT statement instead of XOR'ing by 0xffffffff
+													       // compiler will typically convert the XOR 0xffffffff into a MVN instruction anyway but its good to specify
 }
 
 /**
@@ -216,10 +229,10 @@ static inline uint32_t sbox2(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t 
  * @param const bs_reg_t x3 - byte 4
  * @return bs_reg_t - result of substitution
  */
-static inline uint32_t sbox3(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t in3)
+static inline bs_reg_t sbox3(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
 	// y3 = x1 · x2 · x0 + x1 · x3 · x0 + x2 · x3 · x0 + x0 + x1 + x1 · x2 + x3 + 1
-	return ~((in1 & in2 & in0) ^ (in1 & in3 & in0) ^ (in2 & in3 & in0) ^ in0 ^ in1 ^ (in1 & in2) ^ in3);// ^ 0xffffffff;
+	return ~((in1 & in2 & in0) ^ (in1 & in3 & in0) ^ (in2 & in3 & in0) ^ in0 ^ in1 ^ (in1 & in2) ^ in3); // NOT statement instead of XOR'ing by 0xffffffff
 }
 
 /**
@@ -228,22 +241,23 @@ static inline uint32_t sbox3(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t 
  */
 static void sbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 {
-	bs_reg_t state_out[64] = {0};
+	bs_reg_t state_out[CRYPTO_IN_SIZE_BIT]; // don't initialise arrays as the contents are filled up and them being zero'd isn't needed
 
-	for (uint8_t i = 0; i < 16; ++i) {
+	for (uint8_t i = 0; i < 16; ++i) { // 16 = CRYPTO_IN_SIZE_BIT / 4
 		const uint8_t off = i * 4;
-		const bs_reg_t in0 = state_bs[off + 0];
+
+		const bs_reg_t in0 = state_bs[off];
 		const bs_reg_t in1 = state_bs[off + 1];
 		const bs_reg_t in2 = state_bs[off + 2];
 		const bs_reg_t in3 = state_bs[off + 3];
 
-		state_out[off + 0] = sbox0(in0, in1, in2, in3);
+		state_out[off] = sbox0(in0, in1, in2, in3);
 		state_out[off + 1] = sbox1(in0, in1, in2, in3);
 		state_out[off + 2] = sbox2(in0, in1, in2, in3);
 		state_out[off + 3] = sbox3(in0, in1, in2, in3);
 	}
 
-	for (uint32_t i = 0; i < 64; ++i) {
+	for (uint32_t i = 0; i < CRYPTO_IN_SIZE_BIT; ++i) {
 		state_bs[i] = state_out[i];
 	}
 
@@ -255,19 +269,15 @@ static void sbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
  */
 static void pbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 {
-	bs_reg_t state_out[CRYPTO_IN_SIZE_BIT] = {0};
+	bs_reg_t state_out[CRYPTO_IN_SIZE_BIT]; // don't initialise arrays as the contents are filled up and them being zero'd isn't needed
 
-	for (uint32_t i = 0; i < 64; i += 4) {
+	for (uint32_t i = 0; i < CRYPTO_IN_SIZE_BIT; i += 4) {
 		const uint8_t off = i / 4;
-		const uint32_t off0 = off + 0 * 16;
-		const uint32_t off1 = off + 1 * 16;
-		const uint32_t off2 = off + 2 * 16;
-		const uint32_t off3 = off + 3 * 16;
 
-		state_out[off0] = state_bs[i];
-		state_out[off1] = state_bs[i + 1];
-		state_out[off2] = state_bs[i + 2];
-		state_out[off3] = state_bs[i + 3];
+		state_out[off] = state_bs[i];
+		state_out[off + 16] = state_bs[i + 1];
+		state_out[off + 32] = state_bs[i + 2];
+		state_out[off + 48] = state_bs[i + 3];
 	}
 
 	for (uint32_t i = 0; i < CRYPTO_IN_SIZE_BIT; ++i) {

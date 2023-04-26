@@ -114,8 +114,8 @@ static void add_round_key(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT], uint8_t roundke
 	const uint32_t bit_array[2] = {0x00000000, 0xFFFFFFFF};
 
 	for (uint8_t i = 0; i < CRYPTO_IN_SIZE_BIT; ++i) {
-		const uint8_t currentBit = (roundkey[i / 8] >> (i % 8)) & 0x1; // get current bit of current byte from roundkey
-		state_bs[i] ^= bit_array[currentBit]; // app_bit is either 0 or 1 so index `bit_array`
+		const uint8_t current_bit = get_reg_bit(roundkey[i / 8], (i % 8)); // get current bit of current byte from from roundkey
+		state_bs[i] ^= bit_array[current_bit]; // app_bit is either 0 or 1 so index `bit_array`
 	}
 }
 
@@ -168,7 +168,7 @@ static void update_round_key(uint8_t key[CRYPTO_KEY_SIZE], const uint8_t r)
  * @param const bs_reg_t x3 - byte 4
  * @return bs_reg_t - result of substitution
  */
-static inline uint32_t sbox0(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t in3)
+static inline bs_reg_t sbox0(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
 	// y0 = x0 + x1 · x2 + x2 + x3
 	return in0 ^ (in1 & in2) ^ in2 ^ in3;
@@ -183,11 +183,10 @@ static inline uint32_t sbox0(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t 
  * @param const bs_reg_t x3 - byte 4
  * @return bs_reg_t - result of substitution
  */
-static inline uint32_t sbox1(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t in3)
+static inline bs_reg_t sbox1(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
 	// y1 = x0 · x2 · x1 + x0 · x3 · x1 + x3 · x1 + x1 + x0 · x2 · x3 + x2 · x3 + x3
 	return (in0 & in2 & in1) ^ (in0 & in3 & in1) ^ (in3 & in1) ^ in1 ^ (in0 & in2 & in3) ^ (in2 & in3) ^ in3;
-
 }
 
 /**
@@ -199,10 +198,10 @@ static inline uint32_t sbox1(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t 
  * @param const bs_reg_t x3 - byte 4
  * @return bs_reg_t - result of substitution
  */
-static inline uint32_t sbox2(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t in3)
+static inline bs_reg_t sbox2(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
 	// y2 = x0 · x1 + x0 · x3 · x1 + x3 · x1 + x2 + x0 · x3 + x0 · x2 · x3 + x3 + 1
-	return ~((in0 & in1) ^ (in0 & in3 & in1) ^ (in3 & in1) ^ in2 ^ (in0 & in3) ^ (in0 & in2 & in3) ^ in3); //^ 0xffffffff;
+	return (in0 & in1) ^ (in0 & in3 & in1) ^ (in3 & in1) ^ in2 ^ (in0 & in3) ^ (in0 & in2 & in3) ^ in3 ^ 0xffffffff;
 }
 
 /**
@@ -214,10 +213,10 @@ static inline uint32_t sbox2(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t 
  * @param const bs_reg_t x3 - byte 4
  * @return bs_reg_t - result of substitution
  */
-static inline uint32_t sbox3(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t in3)
+static inline bs_reg_t sbox3(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
 	// y3 = x1 · x2 · x0 + x1 · x3 · x0 + x2 · x3 · x0 + x0 + x1 + x1 · x2 + x3 + 1
-	return ~((in1 & in2 & in0) ^ (in1 & in3 & in0) ^ (in2 & in3 & in0) ^ in0 ^ in1 ^ (in1 & in2) ^ in3);// ^ 0xffffffff;
+	return (in1 & in2 & in0) ^ (in1 & in3 & in0) ^ (in2 & in3 & in0) ^ in0 ^ in1 ^ (in1 & in2) ^ in3 ^ 0xffffffff;
 }
 
 /**
@@ -226,10 +225,11 @@ static inline uint32_t sbox3(uint32_t in0, uint32_t in1, uint32_t in2, uint32_t 
  */
 static void sbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 {
-	bs_reg_t state_out[64] = {0};
+	bs_reg_t state_out[CRYPTO_IN_SIZE_BIT]; // don't initialise arrays as the contents are filled up and them being zero'd isn't needed
 
-	for (uint8_t i = 0; i < 16; ++i) {
+	for (uint8_t i = 0; i < CRYPTO_IN_SIZE_BIT / 4; ++i) {
 		const uint8_t off = i * 4;
+
 		const bs_reg_t in0 = state_bs[off + 0];
 		const bs_reg_t in1 = state_bs[off + 1];
 		const bs_reg_t in2 = state_bs[off + 2];
@@ -241,7 +241,7 @@ static void sbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 		state_out[off + 3] = sbox3(in0, in1, in2, in3);
 	}
 
-	for (uint32_t i = 0; i < 64; ++i) {
+	for (uint32_t i = 0; i < CRYPTO_IN_SIZE_BIT; ++i) {
 		state_bs[i] = state_out[i];
 	}
 
@@ -253,14 +253,15 @@ static void sbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
  */
 static void pbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 {
-	bs_reg_t state_out[CRYPTO_IN_SIZE_BIT] = {0};
+	bs_reg_t state_out[CRYPTO_IN_SIZE_BIT]; // don't initialise arrays as the contents are filled up and them being zero'd isn't needed
 
-	for (uint32_t i = 0; i < 64; i += 4) {
+	for (uint32_t i = 0; i < CRYPTO_IN_SIZE_BIT; i += 4) {
 		const uint8_t off = i / 4;
-		const uint32_t off0 = off + 0 * 16;
-		const uint32_t off1 = off + 1 * 16;
-		const uint32_t off2 = off + 2 * 16;
-		const uint32_t off3 = off + 3 * 16;
+
+		const uint32_t off0 = off + (0 * 16);
+		const uint32_t off1 = off + (1 * 16);
+		const uint32_t off2 = off + (2 * 16);
+		const uint32_t off3 = off + (3 * 16);
 
 		state_out[off0] = state_bs[i];
 		state_out[off1] = state_bs[i + 1];
