@@ -2,27 +2,34 @@
 
 /**
  * @brief Optimised bitsliced implementation of PRESENT cryptographic algorithm
- * Optimisations performed (note some of these are easy and done by compilers):
-  * x ^ 0xffffffff -> ~(x)
+ *
+ * @authors Doaa A., Dnyaneshwar S., Salih MSA
+ *
+ * @note Optimisations performed:
+  * #1 x ^ 0xffffffff -> ~(x)
     * `eor` requires use of 3 sources - dest reg, val1 reg, val2 flexible
     * `mvn` (bitwise not) just needs two - dest reg, val1 reg
-    * theoretically, should be quicker
-  * Common calculations created into offset variables
+    * both theoretically and on a machine-code basis, it should be quicker
+  * #2 Common calculations created into offset variables
     * Less CPU time spent on needless calculations
     * e.g. (i / 4) + (1 * 16) -> off + (1 * 16), (i / 4) + (2 * 16) -> off + (2 * 16)
-  * One-off calculations not stored in temporary variables
+  * #3 One-off calculations not stored in temporary variables
     * Allows compiler to better optimise keeping values in registers and not RAM, even if it makes the code look untidy
-  * Manual reduction of constant integer expression
+  * #4 Manual reduction of constant integer expression
     * Compiler might not reduce an expression when it's too complex to it - do it yourself to improve performance
     * e.g. 16 * 0 -> n/a, 16 * 1 -> 16, ...
-  * TODO #1 SBOX reduction
-  * TODO #2 check and use XOR to set 0
- * @authors Doaa A., Dnyaneshwar S., Salih MSA
+  * #5 const [] -> static const T[]
+    * ...when declarted within functions, where static variables means it's globalised (i.e. all instances of the function have access to it)
+    * Cost is persistent memory use (in .data) but improves performance by reducing initialisation time to only once (when function is first called)
+  * #6 TODO #1 SBOX reduction
+  * #7 TODO #2 Unrolling smaller loops
+  *
+  * Some of the optimisations are already done by the compiler
+   * This includes machine / architecture-dependant instructions - I'm fine not bothering with these (such as whether it should use xor x, x as opposed to x = 0, whether it's more optimal to shift or to divide (by a power of 2))
+   * Some optimisations may involve basic integer expressions (such as pre-calculating expressions involving constant) - these have been implemented even though the compiler may have gone and done it had I left it be
+   * Some are structural, such as whether to completely reform an expression, using common variables, etc. - these have to be implemented because the compiler isn't smart enough to do it alone
+   * Either way, this code should be faster than it's non-optimised counterpart
  */
-
-static const uint8_t sbox[16] = { /* Lookup table for the s-box substitution layer */
-	0xC, 0x5, 0x6, 0xB, 0x9, 0x0, 0xA, 0xD, 0x3, 0xE, 0xF, 0x8, 0x4, 0x7, 0x1, 0x2,
-};
 
 /**
  * @brief get_reg_bit - inlined method to return the i-th bit of the byte s
@@ -87,7 +94,7 @@ static void enslice(const uint8_t pt[CRYPTO_IN_SIZE * BITSLICE_WIDTH], bs_reg_t 
 
 	for (uint32_t i = 0; i < BITSLICE_WIDTH; ++i) { // TODO what are we iterating over?
 		for (uint32_t j = 0; j < CRYPTO_IN_SIZE_BIT; ++j) { // TODO what are we iterating over?
-			const uint32_t bit_value = (uint32_t)get_reg_bit(*ptr, j % 8); // get bit from byte indicated by ptr (our plaintext)
+			const bs_reg_t bit_value = (bs_reg_t)get_reg_bit(*ptr, j % 8); // get bit from byte indicated by ptr (our plaintext)
 			state_bs[j] = cpy_bs_bit(state_bs[j], i, bit_value); // set bit of bitsliced array, as specified by i which serves as our bitoffset
 									  // note that bit_value will be promoted to uint32_t to allow for potential max bit shift
 
@@ -126,7 +133,7 @@ static void unslice(const bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT], uint8_t pt[CRYP
  */
 static void add_round_key(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT], uint8_t roundkey[CRYPTO_IN_SIZE])
 {
-	const uint32_t bit_array[2] = {0x00000000, 0xFFFFFFFF};
+	static const bs_reg_t bit_array[2] = {0x00000000, 0xFFFFFFFF};
 
 	for (uint8_t i = 0; i < CRYPTO_IN_SIZE_BIT; ++i) {
 		const uint8_t current_bit = get_reg_bit(roundkey[i / 8], (i % 8)); // get current bit of current byte from roundkey
@@ -147,10 +154,14 @@ static void update_round_key(uint8_t key[CRYPTO_KEY_SIZE], const uint8_t r)
 	// There is no need to edit this code - but you can do so if you want to
 	// optimise further
 	//
+	static const uint8_t sbox[16] = { /* Lookup table for the s-box substitution layer */
+		0xC, 0x5, 0x6, 0xB, 0x9, 0x0, 0xA, 0xD, 0x3, 0xE, 0xF, 0x8, 0x4, 0x7, 0x1, 0x2,
+	};
+
 	uint8_t tmp = 0;
-	const uint8_t tmp2 = key[2];
-	const uint8_t tmp1 = key[1];
 	const uint8_t tmp0 = key[0];
+	const uint8_t tmp1 = key[1];
+	const uint8_t tmp2 = key[2];
 
 	// rotate right by 19 bit
 	key[0] = key[2] >> 3 | key[3] << 5;

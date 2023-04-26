@@ -5,10 +5,6 @@
  * @authors Doaa A., Dnyaneshwar S., Salih MSA
  */
 
-static const uint8_t sbox[16] = { /* Lookup table for the s-box substitution layer */
-	0xC, 0x5, 0x6, 0xB, 0x9, 0x0, 0xA, 0xD, 0x3, 0xE, 0xF, 0x8, 0x4, 0x7, 0x1, 0x2,
-};
-
 /**
  * @brief get_reg_bit - inlined method to return the i-th bit of the byte s
  * @note Very similar to get_bs_bit but it's inlined so won't be function wasting memory
@@ -72,7 +68,7 @@ static void enslice(const uint8_t pt[CRYPTO_IN_SIZE * BITSLICE_WIDTH], bs_reg_t 
 
 	for (uint32_t i = 0; i < BITSLICE_WIDTH; ++i) { // TODO what are we iterating over?
 		for (uint32_t j = 0; j < CRYPTO_IN_SIZE_BIT; ++j) { // TODO what are we iterating over?
-			const uint32_t bit_value = (uint32_t)get_reg_bit(*ptr, j % 8); // get bit from byte indicated by ptr (our plaintext)
+			const bs_reg_t bit_value = (bs_reg_t)get_reg_bit(*ptr, j % 8); // get bit from byte indicated by ptr (our plaintext)
 			state_bs[j] = cpy_bs_bit(state_bs[j], i, bit_value); // set bit of bitsliced array, as specified by i which serves as our bitoffset
 									  // note that bit_value will be promoted to uint32_t to allow for potential max bit shift
 
@@ -111,7 +107,7 @@ static void unslice(const bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT], uint8_t pt[CRYP
  */
 static void add_round_key(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT], uint8_t roundkey[CRYPTO_IN_SIZE])
 {
-	const uint32_t bit_array[2] = {0x00000000, 0xFFFFFFFF};
+	const bs_reg_t bit_array[2] = {0x00000000, 0xFFFFFFFF};
 
 	for (uint8_t i = 0; i < CRYPTO_IN_SIZE_BIT; ++i) {
 		const uint8_t current_bit = get_reg_bit(roundkey[i / 8], (i % 8)); // get current bit of current byte from from roundkey
@@ -132,10 +128,14 @@ static void update_round_key(uint8_t key[CRYPTO_KEY_SIZE], const uint8_t r)
 	// There is no need to edit this code - but you can do so if you want to
 	// optimise further
 	//
+	const uint8_t sbox[16] = { /* Lookup table for the s-box substitution layer */
+		0xC, 0x5, 0x6, 0xB, 0x9, 0x0, 0xA, 0xD, 0x3, 0xE, 0xF, 0x8, 0x4, 0x7, 0x1, 0x2,
+	};
+
 	uint8_t tmp = 0;
-	const uint8_t tmp2 = key[2];
-	const uint8_t tmp1 = key[1];
 	const uint8_t tmp0 = key[0];
+	const uint8_t tmp1 = key[1];
+	const uint8_t tmp2 = key[2];
 
 	// rotate right by 19 bit
 	key[0] = key[2] >> 3 | key[3] << 5;
