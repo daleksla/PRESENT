@@ -266,7 +266,7 @@ static void pbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 		state_out[off3] = state_bs[i + 3];
 	}
 
-	memcpy(state_bs, state_out, CRYPTO_IN_SIZE_BIT * sizeof(bs_reg_t)); /* why reinvent the wheel? */
+	memcpy(state_bs, state_out, CRYPTO_IN_SIZE_BIT * sizeof(bs_reg_t));
 }
 
 /**

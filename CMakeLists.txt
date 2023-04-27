@@ -26,8 +26,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_compile_options(
+	# Warnings
 #	-Werror # it appears the SDK has a bunch of errors internally. Can't really enforce warnings->errors...
-#	-Wpedantic
+	-Wpedantic
 	-Wall
 	-Wextra
 	-Wbad-function-cast
@@ -43,12 +44,15 @@ add_compile_options(
 	-Wredundant-decls
 	-Wsequence-point
 	-Wshadow
-	-Wstrict-prototypes 
+	-Wstrict-prototypes
 	-Wswitch
 	-Wundef
 	-Wunreachable-code
 	-Wunused-but-set-parameter
 	-Wwrite-strings
+
+	# Optimisations
+	-Ofast # super fast optimisation which is permitted to sacrifice space
 )
 include_directories(
 	include/
@@ -63,14 +67,16 @@ include_directories(
 #endif()
 
 ### Now actually compile ###
-add_executable(pico_present_ref src/present_ref/main.c src/present_ref/crypto.c)
+add_library(present_ref src/present_ref/crypto.c)
+add_library(present_bs src/present_bs/crypto.c)
+add_library(present_bs_op src/present_bs/crypto_op.c)
+
+add_executable(pico_present_ref src/present_ref/main.c)
 pico_enable_stdio_usb(pico_present_ref 1)
 pico_enable_stdio_uart(pico_present_ref 1)
 pico_add_extra_outputs(pico_present_ref)
-target_link_libraries(pico_present_ref pico_stdlib hardware_clocks pico_time)
+target_link_libraries(pico_present_ref present_ref pico_stdlib hardware_clocks pico_time)
 
-add_library(present_bs src/present_bs/crypto.c)
-add_library(present_bs_op src/present_bs/crypto_op.c)
 add_executable(pico_present_bs src/present_bs/main.c)
 pico_enable_stdio_usb(pico_present_bs 1)
 pico_enable_stdio_uart(pico_present_bs 1)

@@ -17,25 +17,16 @@
   * #2 Common calculations created into offset variables
     * Less CPU time spent on needless calculations
     * e.g. (i / 4) + (1 * 16) -> off + (1 * 16), (i / 4) + (2 * 16) -> off + (2 * 16)
-  * #3 One-off calculations not stored in temporary variables
-    * Allows compiler to better optimise keeping values in registers and not RAM, even if it makes the code look untidy / unnclean
+  * #3 Minimising RAM interaction
+    * Not using tmp variables allows compiler to better optimise keeping values in registers and not RAM, even if it makes the code look untidy / unnclean
+    * const [] -> static const T[], when declarted within functions, where static variables means it's globalised (i.e. all instances of the function have access to it) - cost is persistent memory use (in .data) but improves performance by reducing initialisation time to only once (when function is first called)
   * #4 Manual reduction of constant integer expression
     * Compiler might not reduce an expression when it's too complex to it - do it yourself to improve performance
     * e.g. 16 * 0 -> n/a, 16 * 1 -> 16, ...
-  * #5 const [] -> static const T[]
-    * ...when declarted within functions, where static variables means it's globalised (i.e. all instances of the function have access to it)
-    * Cost is persistent memory use (in .data) but improves performance by reducing initialisation time to only once (when function is first called)
-  * #6 Unrolling loops
+  * #5 Unrolling loops
     * Takes more memory in the form of instructions but no jumping, condition evaluating, calculating offset values per loop, etc.
     * Did this completely for pbox & sbox layers
     * The enslice and unslice functions would be far too large for both of their loops though (attempted to and I was reaching 5000+ lines of code) - instead I unrolled the inner loop which goes over each bit of each byte of data and writes it to a new element
-  * #7 TODO SBOX reduction
-  *
-  * Some of the optimisations are already done by the compiler
-   * This includes machine / architecture-dependant instructions - I'm fine not bothering with these (such as whether it should use xor x, x as opposed to x = 0, whether it's more optimal to shift or to divide (by a power of 2))
-   * Some optimisations may involve basic integer expressions (such as pre-calculating expressions involving constant) - these have been implemented even though the compiler may have gone and done it had I left it be
-   * Some are structural, such as whether to completely reform an expression, loop unrolling using common variables, etc. - these have to be implemented because a) the compiler isn't smart enough to do it alone, b) we're making a concious decision to waste a bunch of memory
-   * Either way, this code should be *faster* than it's non-optimised counterpart
  */
 
 /**
@@ -376,12 +367,12 @@ static void enslice(const uint8_t pt[CRYPTO_IN_SIZE * BITSLICE_WIDTH], bs_reg_t 
 static void unslice(const bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT], uint8_t pt[CRYPTO_IN_SIZE * BITSLICE_WIDTH])
 {
 	uint8_t *ptr = pt; // initialise write only ptr for pt array
-	uint8_t bit_value;
+	bs_reg_t bit_value;
 
 	for (uint32_t i = 0; i < BITSLICE_WIDTH; ++i) {
 		// j = 0
 		bit_value = (uint8_t)get_bs_bit(state_bs[0], i); // get bit from byte indicated by bitsliced array
-		*ptr = cpy_reg_bit(*ptr, 0, bit_value); // set bit from byte indicated by ptr array
+		*ptr = cpy_reg_bit(*ptr, 0, (uint8_t)get_bs_bit(state_bs[0], i));  // get bit from byte indicated by bitsliced array & set bit from byte indicated by ptr array
 
 		// j = 1
 		bit_value = (uint8_t)get_bs_bit(state_bs[1], i);
@@ -782,7 +773,6 @@ static void update_round_key(uint8_t key[CRYPTO_KEY_SIZE], const uint8_t r)
  */
 static inline bs_reg_t sbox0(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
-	// y0 = x0 + x1 · x2 + x2 + x3
 	return in0 ^ (in1 & in2) ^ in2 ^ in3;
 }
 
@@ -797,9 +787,11 @@ static inline bs_reg_t sbox0(const bs_reg_t in0, const bs_reg_t in1, const bs_re
  */
 static inline bs_reg_t sbox1(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
-	// y1 = x0 · x2 · x1 + x0 · x3 · x1 + x3 · x1 + x1 + x0 · x2 · x3 + x2 · x3 + x3
-	return (in0 & in2 & in1) ^ (in0 & in3 & in1) ^ (in3 & in1) ^ in1 ^ (in0 & in2 & in3) ^ (in2 & in3) ^ in3;
+	const bs_reg_t in0in1 = in0 & in1;
+	const bs_reg_t in1in3 = in1 & in3;
+	const bs_reg_t in2in3 = in2 & in3;
 
+	return (in0in1 & in2) ^ (in0in1 & in3) ^ in1in3 ^ in1 ^ (in0 & in2in3) ^ in2in3 ^ in3;
 }
 
 /**
@@ -813,9 +805,11 @@ static inline bs_reg_t sbox1(const bs_reg_t in0, const bs_reg_t in1, const bs_re
  */
 static inline bs_reg_t sbox2(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
-	// y2 = x0 · x1 + x0 · x3 · x1 + x3 · x1 + x2 + x0 · x3 + x0 · x2 · x3 + x3 + 1
-	return ~((in0 & in1) ^ (in0 & in3 & in1) ^ (in3 & in1) ^ in2 ^ (in0 & in3) ^ (in0 & in2 & in3) ^ in3); // NOT statement instead of XOR'ing by 0xffffffff
-													       // compiler will typically convert the XOR 0xffffffff into a MVN instruction anyway but its good to specify
+	const bs_reg_t in0in1 = in0 & in1;
+	const bs_reg_t in0in3 = in0 & in3;
+	const bs_reg_t in3in1 = in3 & in1;
+
+	return ~((in0in1) ^ (in0in3 & in1) ^ in3in1 ^ in2 ^ in0in3 ^ (in0 & in2 & in3) ^ in3);
 }
 
 /**
@@ -829,8 +823,11 @@ static inline bs_reg_t sbox2(const bs_reg_t in0, const bs_reg_t in1, const bs_re
  */
 static inline bs_reg_t sbox3(const bs_reg_t in0, const bs_reg_t in1, const bs_reg_t in2, const bs_reg_t in3)
 {
-	// y3 = x1 · x2 · x0 + x1 · x3 · x0 + x2 · x3 · x0 + x0 + x1 + x1 · x2 + x3 + 1
-	return ~((in1 & in2 & in0) ^ (in1 & in3 & in0) ^ (in2 & in3 & in0) ^ in0 ^ in1 ^ (in1 & in2) ^ in3); // NOT statement instead of XOR'ing by 0xffffffff
+	const bs_reg_t in1in2 = in1 & in2;
+	const bs_reg_t in1in3 = in1 & in3;
+	const bs_reg_t in2in3 = in2 & in3;
+
+	return ~(((in1in2 & in0) ^ (in1in3 & in0) ^ (in2in3 & in0) ^ in0 ^ in1 ^ in1in2 ^ in3));
 }
 
 /**
