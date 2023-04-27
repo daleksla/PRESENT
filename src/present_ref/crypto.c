@@ -8,11 +8,7 @@
  * @brief Basic-optimised standard implementation of PRESENT cryptographic algorithm
  * @authors Doaa A., Dnyaneshwar S., Salih MSA
  * @note Optimisations performed:
-  * #1 / and % used for the same values -> div(numer, denom)
-    * low level instructions may provide both quotient and remainder in one instruction to CPU
-    * if we need both these values, using div() to calculate both at once is either just as slow as / and % (i.e. two instructions) or twice as fast (i.e. one instruction)
-    * However, its a struct containing two values so it takes more space at once
-  * #2 Common calculations created into offset variables
+  * #1 Common calculations created into offset variables
     * Less CPU time spent on needless calculations
     * e.g. (i / 4) + (1 * 16) -> off + (1 * 16), (i / 4) + (2 * 16) -> off + (2 * 16)
   *
@@ -75,8 +71,9 @@ static void pbox_layer(uint8_t s[CRYPTO_IN_SIZE])
 	for (uint8_t i = 0; i < CRYPTO_IN_SIZE; ++i) { // loop over each byte
 		for (uint8_t j = 0; j < 8; ++j) { // loop over each bit of the byte
 			const uint8_t tmp = get_bit(s[i], j); // bit at position j is permuted to position, store in state
-			const uint8_t new = (uint8_t)((i * 8 + j) / 4) + ((i * 8 + j) % 4) * 16; // compute the permuted position
-			out[(uint8_t)(new / 8)] = cpy_bit(out[(uint8_t)(new / 8)], new % 8, tmp); // writeout
+			const uint8_t com = (i * 8 + j);
+			const uint8_t new = (com / 4) + (com % 4) * 16; // compute the permuted position
+			out[new / 8] = cpy_bit(out[new / 8], new % 8, tmp); // writeout
 		}
 	}
 
