@@ -11,12 +11,6 @@
   * #1 Common calculations created into offset variables
     * Less CPU time spent on needless calculations
     * e.g. (i / 4) + (1 * 16) -> off + (1 * 16), (i / 4) + (2 * 16) -> off + (2 * 16)
-  *
-  * Some of the optimisations are already done by the compiler
-   * This includes machine / architecture-dependant instructions - I'm fine not bothering with these (such as whether it should use xor x, x as opposed to x = 0, whether it's more optimal to shift or to divide (by a power of 2))
-   * Some optimisations may involve basic integer expressions (such as pre-calculating expressions involving constant) - these have been implemented even though the compiler may have gone and done it had I left it be
-   * Some are structural, such as using common variables
-   * This isn't very optimised as our bitslicing implementation so it's really just the basics to make this standard implementation not non-efficient
  */
 
 static const uint8_t sbox[16] = { /* Lookup table for the s-box substitution layer */
