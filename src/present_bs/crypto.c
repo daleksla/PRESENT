@@ -5,7 +5,7 @@
 
 /**
  * @brief Bitsliced implementation of PRESENT cryptographic algorithm
- * Written to be a clean implementation using code sources provided, not focussed on optimisations
+ * Written to be a clean implementation using code sources provided, not focused on optimisations - see crypto_op.c for one which cares strictly about performance
  * @authors Doaa A., Dnyaneshwar S., Salih MSA
  */
 
@@ -70,8 +70,8 @@ static void enslice(const uint8_t pt[CRYPTO_IN_SIZE * BITSLICE_WIDTH], bs_reg_t 
 {
 	const uint8_t *ptr = pt; // initialise read only ptr for pt array
 
-	for (uint32_t i = 0; i < BITSLICE_WIDTH; ++i) { // TODO what are we iterating over?
-		for (uint32_t j = 0; j < CRYPTO_IN_SIZE_BIT; ++j) { // TODO what are we iterating over?
+	for (uint32_t i = 0; i < BITSLICE_WIDTH; ++i) {
+		for (uint32_t j = 0; j < CRYPTO_IN_SIZE_BIT; ++j) {
 			const bs_reg_t bit_value = (bs_reg_t)get_reg_bit(*ptr, j % 8); // get bit from byte indicated by ptr (our plaintext)
 			state_bs[j] = cpy_bs_bit(state_bs[j], i, bit_value); // set bit of bitsliced array, as specified by i which serves as our bitoffset
 									  // note that bit_value will be promoted to uint32_t to allow for potential max bit shift
@@ -92,8 +92,8 @@ static void unslice(const bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT], uint8_t pt[CRYP
 {
 	uint8_t *ptr = pt; // initialise write only ptr for pt array
 
-	for (uint32_t i = 0; i < BITSLICE_WIDTH; ++i) { // TODO what are we iterating over?
-		for (uint32_t j = 0; j < CRYPTO_IN_SIZE_BIT; ++j) { // TODO what are we iterating over?
+	for (uint32_t i = 0; i < BITSLICE_WIDTH; ++i) {
+		for (uint32_t j = 0; j < CRYPTO_IN_SIZE_BIT; ++j) {
 			const uint8_t bit_value = (uint8_t)get_bs_bit(state_bs[j], i); // get bit from byte from bitsliced array
 			*ptr = cpy_reg_bit(*ptr, j % 8, bit_value); // set bit from byte indicated by ptr, where j % 8 is our bit offset
 
