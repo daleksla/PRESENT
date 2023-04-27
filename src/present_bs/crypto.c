@@ -5,6 +5,7 @@
 
 /**
  * @brief Bitsliced implementation of PRESENT cryptographic algorithm
+ * Written to be a clean implementation using code sources provided, not focussed on optimisations
  * @authors Doaa A., Dnyaneshwar S., Salih MSA
  */
 
@@ -228,17 +229,21 @@ static inline bs_reg_t sbox3(const bs_reg_t in0, const bs_reg_t in1, const bs_re
  */
 static void sbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 {
+	bs_reg_t state_out[CRYPTO_IN_SIZE_BIT];
+
 	for (uint8_t i = 0; i < CRYPTO_IN_SIZE_BIT / 4; ++i) {
 		const bs_reg_t in0 = state_bs[(i * 4) + 0];
 		const bs_reg_t in1 = state_bs[(i * 4) + 1];
 		const bs_reg_t in2 = state_bs[(i * 4) + 2];
 		const bs_reg_t in3 = state_bs[(i * 4) + 3];
 
-		state_bs[(i * 4) + 0] = sbox0(in0, in1, in2, in3);
-		state_bs[(i * 4) + 1] = sbox1(in0, in1, in2, in3);
-		state_bs[(i * 4) + 2] = sbox2(in0, in1, in2, in3);
-		state_bs[(i * 4) + 3] = sbox3(in0, in1, in2, in3);
+		state_out[(i * 4) + 0] = sbox0(in0, in1, in2, in3);
+		state_out[(i * 4) + 1] = sbox1(in0, in1, in2, in3);
+		state_out[(i * 4) + 2] = sbox2(in0, in1, in2, in3);
+		state_out[(i * 4) + 3] = sbox3(in0, in1, in2, in3);
 	}
+
+	memcpy(state_bs, state_out, CRYPTO_IN_SIZE_BIT * sizeof(bs_reg_t)); /* why reinvent the wheel? */
 }
 
 /**
@@ -255,7 +260,7 @@ static void pbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 		const uint32_t off2 = (i / 4) + (2 * 16);
 		const uint32_t off3 = (i / 4) + (3 * 16);
 
-		state_out[off0] = state_bs[i];
+		state_out[off0] = state_bs[i + 0];
 		state_out[off1] = state_bs[i + 1];
 		state_out[off2] = state_bs[i + 2];
 		state_out[off3] = state_bs[i + 3];
@@ -272,7 +277,7 @@ static void pbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 void crypto_func(uint8_t pt[CRYPTO_IN_SIZE * BITSLICE_WIDTH], uint8_t key[CRYPTO_KEY_SIZE])
 {
 	// State buffer and additional backbuffer of same size (you can remove the backbuffer if you do not need it)
-	bs_reg_t state[CRYPTO_IN_SIZE_BIT];
+	bs_reg_t state[CRYPTO_IN_SIZE_BIT] = {0};
 
 	enslice(pt, state); // Bring into bitslicing form
 	for(uint8_t i = 1; i <= 31; ++i) {

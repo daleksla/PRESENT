@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "crypto.h"
 
@@ -7,18 +8,19 @@
  * @brief Basic-optimised standard implementation of PRESENT cryptographic algorithm
  * @authors Doaa A., Dnyaneshwar S., Salih MSA
  * @note Optimisations performed:
-  * TODO #1 / and % used for the same values -> div(numer, denom)
+  * #1 / and % used for the same values -> div(numer, denom)
     * low level instructions may provide both quotient and remainder in one instruction to CPU
     * if we need both these values, using div() to calculate both at once is either just as slow as / and % (i.e. two instructions) or twice as fast (i.e. one instruction)
     * However, its a struct containing two values so it takes more space at once
-  * TODO #2 Common calculations created into offset variables
+  * #2 Common calculations created into offset variables
     * Less CPU time spent on needless calculations
     * e.g. (i / 4) + (1 * 16) -> off + (1 * 16), (i / 4) + (2 * 16) -> off + (2 * 16)
   *
   * Some of the optimisations are already done by the compiler
    * This includes machine / architecture-dependant instructions - I'm fine not bothering with these (such as whether it should use xor x, x as opposed to x = 0, whether it's more optimal to shift or to divide (by a power of 2))
    * Some optimisations may involve basic integer expressions (such as pre-calculating expressions involving constant) - these have been implemented even though the compiler may have gone and done it had I left it be
-   * Some are structural, such as whether to completely reform an expression, loop unrolling using common variables, etc. - these have to be implemented because a) the compiler isn't smart enough to do it alone, b) we're making a concious decision to waste a bunch of memory
+   * Some are structural, such as using common variables
+   * This isn't very optimised as our bitslicing implementation so it's really just the basics to make this standard implementation not non-efficient
  */
 
 static const uint8_t sbox[16] = { /* Lookup table for the s-box substitution layer */
@@ -71,15 +73,20 @@ static void pbox_layer(uint8_t s[CRYPTO_IN_SIZE])
 {
 	uint8_t out[CRYPTO_IN_SIZE] = {0};
 	for (uint8_t i = 0; i < CRYPTO_IN_SIZE; ++i) { // loop over each byte
-		for (uint8_t j = 0; j < sizeof(uint8_t) * 8; ++j) { // loop over each bit of the byte (note sizeof = compile time constant therefore no overhead)
-			const uint8_t tmp = get_bit(s[i], j); // Get j-th bit of byte i in s - PRESENT crypto algorithm permutes the bits, not the bytes
-			const uint8_t new = ((i * 8 + j) / 4) + ((i * 8 + j) % 4) * 16; // Calculate destination byte position
-											// (i*8+j): This part calculates the current bit's position in the entire input data, considering each byte has 8 bits. j represents the byte index, and k represents the bit index within the byte.
-											// ((i*8+j)/4): This part divides the current bit's position by 4, which essentially maps the bit to a new position based on groups of 4 bits.
-											// ((i*8+j) % 4) * 16: This part calculates the remainder when the current bit's position is divided by 4, and then multiplies the result by 16. This operation helps to create a "jump" between bits, ensuring that bits are rearranged with a larger distance between them.
-											// ((i*8+j)/4) + ((i*8+j) % 4) * 16: This expression combines the previous two parts, resulting in the new position for the current bit in the permuted output. The division by 4 spreads the bits evenly, while the modulo operation and multiplication by 16 ensure that bits are rearranged in a non-linear fashion.
+		for (uint8_t j = 0; j < 8; ++j) { // loop over each bit of the byte (note sizeof = compile time constant therefore no overhead)
+			const uint8_t com = i * 8 + j; // (i*8+j): This part calculates the current bit's position in the entire input data, considering each byte has 8 bits. j represents the byte index, and k represents the bit index within the byte.
 
-			out[new / 8] = cpy_bit(out[new / 8], new % 8, tmp); // overrwrite bit (of byte) w bit to new position
+			const div_t dv1 = div(com, 4); // calculate both quotient and remainder
+							// (i*8+j) / 4: This part divides the current bit's position by 4, which essentially maps the bit to a new position based on groups of 4 bits
+							// (i*8+j) % 4: This part calculates the remainder when the current bit's position is divided by 4, 
+
+			const uint8_t new = dv1.quot + dv1.rem * 16; // x * 16: This part multiplies the result by 16. This operation helps to create a "jump" between bits, ensuring that bits are rearranged with a larger distance between them.
+
+			const div_t dv2 = div(new, 8);
+
+			const uint8_t tmp = get_bit(s[i], j); // Get j-th bit of byte i in s - PRESENT crypto algorithm permutes the bits, not the bytes
+
+			out[dv2.quot] = cpy_bit(out[dv2.quot], dv2.rem, tmp); // overrwrite bit (of byte) w bit to new position
 		}
 	}
 
