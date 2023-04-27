@@ -1,3 +1,6 @@
+#include <stdint.h>
+#include <string.h>
+
 #include "crypto.h"
 
 /**
@@ -225,26 +228,17 @@ static inline bs_reg_t sbox3(const bs_reg_t in0, const bs_reg_t in1, const bs_re
  */
 static void sbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 {
-	bs_reg_t state_out[CRYPTO_IN_SIZE_BIT]; // don't initialise arrays as the contents are filled up and them being zero'd isn't needed
-
 	for (uint8_t i = 0; i < CRYPTO_IN_SIZE_BIT / 4; ++i) {
-		const uint8_t off = i * 4;
+		const bs_reg_t in0 = state_bs[(i * 4) + 0];
+		const bs_reg_t in1 = state_bs[(i * 4) + 1];
+		const bs_reg_t in2 = state_bs[(i * 4) + 2];
+		const bs_reg_t in3 = state_bs[(i * 4) + 3];
 
-		const bs_reg_t in0 = state_bs[off + 0];
-		const bs_reg_t in1 = state_bs[off + 1];
-		const bs_reg_t in2 = state_bs[off + 2];
-		const bs_reg_t in3 = state_bs[off + 3];
-
-		state_out[off + 0] = sbox0(in0, in1, in2, in3);
-		state_out[off + 1] = sbox1(in0, in1, in2, in3);
-		state_out[off + 2] = sbox2(in0, in1, in2, in3);
-		state_out[off + 3] = sbox3(in0, in1, in2, in3);
+		state_bs[(i * 4) + 0] = sbox0(in0, in1, in2, in3);
+		state_bs[(i * 4) + 1] = sbox1(in0, in1, in2, in3);
+		state_bs[(i * 4) + 2] = sbox2(in0, in1, in2, in3);
+		state_bs[(i * 4) + 3] = sbox3(in0, in1, in2, in3);
 	}
-
-	for (uint32_t i = 0; i < CRYPTO_IN_SIZE_BIT; ++i) {
-		state_bs[i] = state_out[i];
-	}
-
 }
 
 /**
@@ -256,12 +250,10 @@ static void pbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 	bs_reg_t state_out[CRYPTO_IN_SIZE_BIT]; // don't initialise arrays as the contents are filled up and them being zero'd isn't needed
 
 	for (uint32_t i = 0; i < CRYPTO_IN_SIZE_BIT; i += 4) {
-		const uint8_t off = i / 4;
-
-		const uint32_t off0 = off + (0 * 16);
-		const uint32_t off1 = off + (1 * 16);
-		const uint32_t off2 = off + (2 * 16);
-		const uint32_t off3 = off + (3 * 16);
+		const uint32_t off0 = (i / 4) + (0 * 16);
+		const uint32_t off1 = (i / 4) + (1 * 16);
+		const uint32_t off2 = (i / 4) + (2 * 16);
+		const uint32_t off3 = (i / 4) + (3 * 16);
 
 		state_out[off0] = state_bs[i];
 		state_out[off1] = state_bs[i + 1];
@@ -269,9 +261,7 @@ static void pbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 		state_out[off3] = state_bs[i + 3];
 	}
 
-	for (uint32_t i = 0; i < CRYPTO_IN_SIZE_BIT; ++i) {
-		state_bs[i] = state_out[i];
-	}
+	memcpy(state_bs, state_out, CRYPTO_IN_SIZE_BIT * sizeof(bs_reg_t)); /* why reinvent the wheel? */
 }
 
 /**

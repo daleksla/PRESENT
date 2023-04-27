@@ -1,8 +1,24 @@
+#include <string.h>
+#include <stdint.h>
+
 #include "crypto.h"
 
 /**
- * @brief Standard implementation of PRESENT cryptographic algorithm
+ * @brief Basic-optimised standard implementation of PRESENT cryptographic algorithm
  * @authors Doaa A., Dnyaneshwar S., Salih MSA
+ * @note Optimisations performed:
+  * TODO #1 / and % used for the same values -> div(numer, denom)
+    * low level instructions may provide both quotient and remainder in one instruction to CPU
+    * if we need both these values, using div() to calculate both at once is either just as slow as / and % (i.e. two instructions) or twice as fast (i.e. one instruction)
+    * However, its a struct containing two values so it takes more space at once
+  * TODO #2 Common calculations created into offset variables
+    * Less CPU time spent on needless calculations
+    * e.g. (i / 4) + (1 * 16) -> off + (1 * 16), (i / 4) + (2 * 16) -> off + (2 * 16)
+  *
+  * Some of the optimisations are already done by the compiler
+   * This includes machine / architecture-dependant instructions - I'm fine not bothering with these (such as whether it should use xor x, x as opposed to x = 0, whether it's more optimal to shift or to divide (by a power of 2))
+   * Some optimisations may involve basic integer expressions (such as pre-calculating expressions involving constant) - these have been implemented even though the compiler may have gone and done it had I left it be
+   * Some are structural, such as whether to completely reform an expression, loop unrolling using common variables, etc. - these have to be implemented because a) the compiler isn't smart enough to do it alone, b) we're making a concious decision to waste a bunch of memory
  */
 
 static const uint8_t sbox[16] = { /* Lookup table for the s-box substitution layer */
@@ -67,9 +83,7 @@ static void pbox_layer(uint8_t s[CRYPTO_IN_SIZE])
 		}
 	}
 
-	for (uint8_t i = 0; i < CRYPTO_IN_SIZE; ++i) {
-		s[i] = out[i];  // Copy rearranged bytes back to plaintext s
-	}
+	memcpy(s, out, CRYPTO_IN_SIZE); // Copy rearranged bytes back to plaintext s
 }
 
 /**
