@@ -71,22 +71,12 @@ static void sbox_layer(uint8_t s[CRYPTO_IN_SIZE])
  */
 static void pbox_layer(uint8_t s[CRYPTO_IN_SIZE])
 {
-	uint8_t out[CRYPTO_IN_SIZE] = {0};
+	uint8_t out[CRYPTO_IN_SIZE];
 	for (uint8_t i = 0; i < CRYPTO_IN_SIZE; ++i) { // loop over each byte
-		for (uint8_t j = 0; j < 8; ++j) { // loop over each bit of the byte (note sizeof = compile time constant therefore no overhead)
-			const uint8_t com = i * 8 + j; // (i*8+j): This part calculates the current bit's position in the entire input data, considering each byte has 8 bits. j represents the byte index, and k represents the bit index within the byte.
-
-			const div_t dv1 = div(com, 4); // calculate both quotient and remainder
-							// (i*8+j) / 4: This part divides the current bit's position by 4, which essentially maps the bit to a new position based on groups of 4 bits
-							// (i*8+j) % 4: This part calculates the remainder when the current bit's position is divided by 4, 
-
-			const uint8_t new = dv1.quot + dv1.rem * 16; // x * 16: This part multiplies the result by 16. This operation helps to create a "jump" between bits, ensuring that bits are rearranged with a larger distance between them.
-
-			const div_t dv2 = div(new, 8);
-
-			const uint8_t tmp = get_bit(s[i], j); // Get j-th bit of byte i in s - PRESENT crypto algorithm permutes the bits, not the bytes
-
-			out[dv2.quot] = cpy_bit(out[dv2.quot], dv2.rem, tmp); // overrwrite bit (of byte) w bit to new position
+		for (uint8_t j = 0; j < 8; ++j) { // loop over each bit of the byte
+			const uint8_t tmp = get_bit(s[i], j); // bit at position j is permuted to position, store in state
+			const uint8_t new = (uint8_t)((i * 8 + j) / 4) + ((i * 8 + j) % 4) * 16; // compute the permuted position
+			out[(uint8_t)(new / 8)] = cpy_bit(out[(uint8_t)(new / 8)], new % 8, tmp); // writeout
 		}
 	}
 
