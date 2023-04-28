@@ -62,8 +62,7 @@ static inline uint8_t get_bs_bit(const bs_reg_t s, const uint8_t i)
  */
 static inline uint8_t cpy_reg_bit(uint8_t out, const uint8_t pos, const uint8_t val)
 {
-	out &= ~(1 << (pos)); // Clear bit pos in out
-	out |= ((val) << (pos)); // Set bit pos in out to val
+	out = out & ~(1 << (pos)) | ((val) << (pos)); // Clear bit pos in out and set bit pos in out to val
 	return out;
 }
 
@@ -76,8 +75,7 @@ static inline uint8_t cpy_reg_bit(uint8_t out, const uint8_t pos, const uint8_t 
  */
 static inline bs_reg_t cpy_bs_bit(bs_reg_t out, const uint8_t pos, const bs_reg_t val)
 {
-	out &= ~(1 << (pos)); // Clear bit pos in out
-	out |= ((val) << (pos)); // Set bit pos in out to val
+	out = out & ~(1 << (pos)) | ((val) << (pos)); // Clear bit pos in out and set bit pos in out to val
 	return out;
 }
 
@@ -89,272 +87,206 @@ static inline bs_reg_t cpy_bs_bit(bs_reg_t out, const uint8_t pos, const bs_reg_
 static void enslice(const uint8_t pt[CRYPTO_IN_SIZE * BITSLICE_WIDTH], bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 {
 	const uint8_t *ptr = pt; // initialise read only ptr for pt array
-	bs_reg_t bit_value;
 
 	for (uint32_t i = 0; i < BITSLICE_WIDTH; ++i) {
 		// j = 0
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 0); // get bit from byte indicated by ptr (our plaintext)
-		state_bs[0] = cpy_bs_bit(state_bs[0], i, bit_value); // set bit of bitsliced array, as specified by 2nd arg, which serves as our bitoffset
-								     // note that bit_value will be promoted to uint32_t to allow for potential max bit shift
+		state_bs[0] = cpy_bs_bit(state_bs[0], i, (bs_reg_t)get_reg_bit(*ptr, 0)); // get bit from byte indicated by ptr (our plaintext) and set bit of bitsliced array, as specified by 2nd arg, which serves as our bitoffset
 
 		// j = 1
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 1);
-		state_bs[1] = cpy_bs_bit(state_bs[1], i, bit_value);
+		state_bs[1] = cpy_bs_bit(state_bs[1], i, (bs_reg_t)get_reg_bit(*ptr, 1));
 
 		// j = 2
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 2);
-		state_bs[2] = cpy_bs_bit(state_bs[2], i, bit_value);
+		state_bs[2] = cpy_bs_bit(state_bs[2], i, (bs_reg_t)get_reg_bit(*ptr, 2));
 
 		// j = 3
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 3);
-		state_bs[3] = cpy_bs_bit(state_bs[3], i, bit_value);
+		state_bs[3] = cpy_bs_bit(state_bs[3], i, (bs_reg_t)get_reg_bit(*ptr, 3));
 
 		// j = 4
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 4);
-		state_bs[4] = cpy_bs_bit(state_bs[4], i, bit_value);
+		state_bs[4] = cpy_bs_bit(state_bs[4], i, (bs_reg_t)get_reg_bit(*ptr, 4));
 
 		// j = 5
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 5);
-		state_bs[5] = cpy_bs_bit(state_bs[5], i, bit_value);
+		state_bs[5] = cpy_bs_bit(state_bs[5], i, (bs_reg_t)get_reg_bit(*ptr, 5));
 
 		// j = 6
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 6);
-		state_bs[6] = cpy_bs_bit(state_bs[6], i, bit_value);
+		state_bs[6] = cpy_bs_bit(state_bs[6], i, (bs_reg_t)get_reg_bit(*ptr, 6));
 
 		// j = 7
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 7);
-		state_bs[7] = cpy_bs_bit(state_bs[7], i, bit_value);
+		state_bs[7] = cpy_bs_bit(state_bs[7], i, (bs_reg_t)get_reg_bit(*ptr, 7));
 		++ptr;
 
 		// j = 8
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 0);
-		state_bs[8] = cpy_bs_bit(state_bs[8], i, bit_value);
+		state_bs[8] = cpy_bs_bit(state_bs[8], i, (bs_reg_t)get_reg_bit(*ptr, 0));
 
 		// j = 9
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 1);
-		state_bs[9] = cpy_bs_bit(state_bs[9], i, bit_value);
+		state_bs[9] = cpy_bs_bit(state_bs[9], i, (bs_reg_t)get_reg_bit(*ptr, 1));
 
 		// j = 10
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 2);
-		state_bs[10] = cpy_bs_bit(state_bs[10], i, bit_value);
+		state_bs[10] = cpy_bs_bit(state_bs[10], i, (bs_reg_t)get_reg_bit(*ptr, 2));
 
 		// j = 11
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 3);
-		state_bs[11] = cpy_bs_bit(state_bs[11], i, bit_value);
+		state_bs[11] = cpy_bs_bit(state_bs[11], i, (bs_reg_t)get_reg_bit(*ptr, 3));
 
 		// j = 12
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 4);
-		state_bs[12] = cpy_bs_bit(state_bs[12], i, bit_value);
+		state_bs[12] = cpy_bs_bit(state_bs[12], i, (bs_reg_t)get_reg_bit(*ptr, 4));
 
 		// j = 13
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 5);
-		state_bs[13] = cpy_bs_bit(state_bs[13], i, bit_value);
+		state_bs[13] = cpy_bs_bit(state_bs[13], i, (bs_reg_t)get_reg_bit(*ptr, 5));
 
 		// j = 14
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 6);
-		state_bs[14] = cpy_bs_bit(state_bs[14], i, bit_value);
+		state_bs[14] = cpy_bs_bit(state_bs[14], i, (bs_reg_t)get_reg_bit(*ptr, 6));
 
 		// j = 15
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 7);
-		state_bs[15] = cpy_bs_bit(state_bs[15], i, bit_value);
+		state_bs[15] = cpy_bs_bit(state_bs[15], i, (bs_reg_t)get_reg_bit(*ptr, 7));
 		++ptr;
 
 		// j = 16
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 0);
-		state_bs[16] = cpy_bs_bit(state_bs[16], i, bit_value);
+		state_bs[16] = cpy_bs_bit(state_bs[16], i, (bs_reg_t)get_reg_bit(*ptr, 0));
 
 		// j = 17
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 1);
-		state_bs[17] = cpy_bs_bit(state_bs[17], i, bit_value);
+		state_bs[17] = cpy_bs_bit(state_bs[17], i, (bs_reg_t)get_reg_bit(*ptr, 1));
 
 		// j = 18
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 2);
-		state_bs[18] = cpy_bs_bit(state_bs[18], i, bit_value);
+		state_bs[18] = cpy_bs_bit(state_bs[18], i, (bs_reg_t)get_reg_bit(*ptr, 2));
 
 		// j = 19
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 3);
-		state_bs[19] = cpy_bs_bit(state_bs[19], i, bit_value);
+		state_bs[19] = cpy_bs_bit(state_bs[19], i, (bs_reg_t)get_reg_bit(*ptr, 3));
 
 		// j = 20
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 4);
-		state_bs[20] = cpy_bs_bit(state_bs[20], i, bit_value);
+		state_bs[20] = cpy_bs_bit(state_bs[20], i, (bs_reg_t)get_reg_bit(*ptr, 4));
 
 		// j = 21
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 5);
-		state_bs[21] = cpy_bs_bit(state_bs[21], i, bit_value);
+		state_bs[21] = cpy_bs_bit(state_bs[21], i, (bs_reg_t)get_reg_bit(*ptr, 5));
 
 		// j = 22
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 6);
-		state_bs[22] = cpy_bs_bit(state_bs[22], i, bit_value);
+		state_bs[22] = cpy_bs_bit(state_bs[22], i, (bs_reg_t)get_reg_bit(*ptr, 6));
 
 		// j = 23
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 7);
-		state_bs[23] = cpy_bs_bit(state_bs[23], i, bit_value);
+		state_bs[23] = cpy_bs_bit(state_bs[23], i, (bs_reg_t)get_reg_bit(*ptr, 7));
 		++ptr;
 
 		// j = 24
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 0);
-		state_bs[24] = cpy_bs_bit(state_bs[24], i, bit_value);
+		state_bs[24] = cpy_bs_bit(state_bs[24], i, (bs_reg_t)get_reg_bit(*ptr, 0));
 
 		// j = 25
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 1);
-		state_bs[25] = cpy_bs_bit(state_bs[25], i, bit_value);
+		state_bs[25] = cpy_bs_bit(state_bs[25], i, (bs_reg_t)get_reg_bit(*ptr, 1));
 
 		// j = 26
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 2);
-		state_bs[26] = cpy_bs_bit(state_bs[26], i, bit_value);
+		state_bs[26] = cpy_bs_bit(state_bs[26], i, (bs_reg_t)get_reg_bit(*ptr, 2));
 
 		// j = 27
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 3);
-		state_bs[27] = cpy_bs_bit(state_bs[27], i, bit_value);
+		state_bs[27] = cpy_bs_bit(state_bs[27], i, (bs_reg_t)get_reg_bit(*ptr, 3));
 
 		// j = 28
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 4);
-		state_bs[28] = cpy_bs_bit(state_bs[28], i, bit_value);
+		state_bs[28] = cpy_bs_bit(state_bs[28], i, (bs_reg_t)get_reg_bit(*ptr, 4));
 
 		// j = 29
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 5);
-		state_bs[29] = cpy_bs_bit(state_bs[29], i, bit_value);
+		state_bs[29] = cpy_bs_bit(state_bs[29], i, (bs_reg_t)get_reg_bit(*ptr, 5));
 
 		// j = 30
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 6);
-		state_bs[30] = cpy_bs_bit(state_bs[30], i, bit_value);
+		state_bs[30] = cpy_bs_bit(state_bs[30], i, (bs_reg_t)get_reg_bit(*ptr, 6));
 
 		// j = 31
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 7);
-		state_bs[31] = cpy_bs_bit(state_bs[31], i, bit_value);
+		state_bs[31] = cpy_bs_bit(state_bs[31], i, (bs_reg_t)get_reg_bit(*ptr, 7));
 		++ptr;
 
 		// j = 32
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 0);
-		state_bs[32] = cpy_bs_bit(state_bs[32], i, bit_value);
+		state_bs[32] = cpy_bs_bit(state_bs[32], i, (bs_reg_t)get_reg_bit(*ptr, 0));
 
 		// j = 33
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 1);
-		state_bs[33] = cpy_bs_bit(state_bs[33], i, bit_value);
+		state_bs[33] = cpy_bs_bit(state_bs[33], i, (bs_reg_t)get_reg_bit(*ptr, 1));
 
 		// j = 34
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 2);
-		state_bs[34] = cpy_bs_bit(state_bs[34], i, bit_value);
+		state_bs[34] = cpy_bs_bit(state_bs[34], i, (bs_reg_t)get_reg_bit(*ptr, 2));
 
 		// j = 35
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 3);
-		state_bs[35] = cpy_bs_bit(state_bs[35], i, bit_value);
+		state_bs[35] = cpy_bs_bit(state_bs[35], i, (bs_reg_t)get_reg_bit(*ptr, 3));
 
 		// j = 36
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 4);
-		state_bs[36] = cpy_bs_bit(state_bs[36], i, bit_value);
+		state_bs[36] = cpy_bs_bit(state_bs[36], i, (bs_reg_t)get_reg_bit(*ptr, 4));
 
 		// j = 37
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 5);
-		state_bs[37] = cpy_bs_bit(state_bs[37], i, bit_value);
+		state_bs[37] = cpy_bs_bit(state_bs[37], i, (bs_reg_t)get_reg_bit(*ptr, 5));
 
 		// j = 38
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 6);
-		state_bs[38] = cpy_bs_bit(state_bs[38], i, bit_value);
+		state_bs[38] = cpy_bs_bit(state_bs[38], i, (bs_reg_t)get_reg_bit(*ptr, 6));
 
 		// j = 39
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 7);
-		state_bs[39] = cpy_bs_bit(state_bs[39], i, bit_value);
+		state_bs[39] = cpy_bs_bit(state_bs[39], i, (bs_reg_t)get_reg_bit(*ptr, 7));
 		++ptr;
 
 		// j = 40
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 0);
-		state_bs[40] = cpy_bs_bit(state_bs[40], i, bit_value);
+		state_bs[40] = cpy_bs_bit(state_bs[40], i, (bs_reg_t)get_reg_bit(*ptr, 0));
 
 		// j = 41
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 1);
-		state_bs[41] = cpy_bs_bit(state_bs[41], i, bit_value);
+		state_bs[41] = cpy_bs_bit(state_bs[41], i, (bs_reg_t)get_reg_bit(*ptr, 1));
 
 		// j = 42
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 2);
-		state_bs[42] = cpy_bs_bit(state_bs[42], i, bit_value);
+		state_bs[42] = cpy_bs_bit(state_bs[42], i, (bs_reg_t)get_reg_bit(*ptr, 2));
 
 		// j = 43
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 3);
-		state_bs[43] = cpy_bs_bit(state_bs[43], i, bit_value);
+		state_bs[43] = cpy_bs_bit(state_bs[43], i, (bs_reg_t)get_reg_bit(*ptr, 3));
 
 		// j = 44
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 4);
-		state_bs[44] = cpy_bs_bit(state_bs[44], i, bit_value);
+		state_bs[44] = cpy_bs_bit(state_bs[44], i, (bs_reg_t)get_reg_bit(*ptr, 4));
 
 		// j = 45
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 5);
-		state_bs[45] = cpy_bs_bit(state_bs[45], i, bit_value);
+		state_bs[45] = cpy_bs_bit(state_bs[45], i, (bs_reg_t)get_reg_bit(*ptr, 5));
 
 		// j = 46
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 6);
-		state_bs[46] = cpy_bs_bit(state_bs[46], i, bit_value);
+		state_bs[46] = cpy_bs_bit(state_bs[46], i, (bs_reg_t)get_reg_bit(*ptr, 6));
 
 		// j = 47
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 7);
-		state_bs[47] = cpy_bs_bit(state_bs[47], i, bit_value);
+		state_bs[47] = cpy_bs_bit(state_bs[47], i, (bs_reg_t)get_reg_bit(*ptr, 7));
 		++ptr;
 
 		// j = 48
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 0);
-		state_bs[48] = cpy_bs_bit(state_bs[48], i, bit_value);
+		state_bs[48] = cpy_bs_bit(state_bs[48], i, (bs_reg_t)get_reg_bit(*ptr, 0));
 
 		// j = 49
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 1);
-		state_bs[49] = cpy_bs_bit(state_bs[49], i, bit_value);
+		state_bs[49] = cpy_bs_bit(state_bs[49], i, (bs_reg_t)get_reg_bit(*ptr, 1));
 
 		// j = 50
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 2);
-		state_bs[50] = cpy_bs_bit(state_bs[50], i, bit_value);
+		state_bs[50] = cpy_bs_bit(state_bs[50], i, (bs_reg_t)get_reg_bit(*ptr, 2));
 
 		// j = 51
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 3);
-		state_bs[51] = cpy_bs_bit(state_bs[51], i, bit_value);
+		state_bs[51] = cpy_bs_bit(state_bs[51], i, (bs_reg_t)get_reg_bit(*ptr, 3));
 
 		// j = 52
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 4);
-		state_bs[52] = cpy_bs_bit(state_bs[52], i, bit_value);
+		state_bs[52] = cpy_bs_bit(state_bs[52], i, (bs_reg_t)get_reg_bit(*ptr, 4));
 
 		// j = 53
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 5);
-		state_bs[53] = cpy_bs_bit(state_bs[53], i, bit_value);
+		state_bs[53] = cpy_bs_bit(state_bs[53], i, (bs_reg_t)get_reg_bit(*ptr, 5));
 
 		// j = 54
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 6);
-		state_bs[54] = cpy_bs_bit(state_bs[54], i, bit_value);
+		state_bs[54] = cpy_bs_bit(state_bs[54], i, (bs_reg_t)get_reg_bit(*ptr, 6));
 
 		// j = 55
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 7);
-		state_bs[55] = cpy_bs_bit(state_bs[55], i, bit_value);
+		state_bs[55] = cpy_bs_bit(state_bs[55], i, (bs_reg_t)get_reg_bit(*ptr, 7));
 		++ptr;
 
 		// j = 56
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 0);
-		state_bs[56] = cpy_bs_bit(state_bs[56], i, bit_value);
+		state_bs[56] = cpy_bs_bit(state_bs[56], i, (bs_reg_t)get_reg_bit(*ptr, 0));
 
 		// j = 57
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 1);
-		state_bs[57] = cpy_bs_bit(state_bs[57], i, bit_value);
+		state_bs[57] = cpy_bs_bit(state_bs[57], i, (bs_reg_t)get_reg_bit(*ptr, 1));
 
 		// j = 58
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 2);
-		state_bs[58] = cpy_bs_bit(state_bs[58], i, bit_value);
+		state_bs[58] = cpy_bs_bit(state_bs[58], i, (bs_reg_t)get_reg_bit(*ptr, 2));
 
 		// j = 59
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 3);
-		state_bs[59] = cpy_bs_bit(state_bs[59], i, bit_value);
+		state_bs[59] = cpy_bs_bit(state_bs[59], i, (bs_reg_t)get_reg_bit(*ptr, 3));
 
 		// j = 60
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 4);
-		state_bs[60] = cpy_bs_bit(state_bs[60], i, bit_value);
+		state_bs[60] = cpy_bs_bit(state_bs[60], i, (bs_reg_t)get_reg_bit(*ptr, 4));
 
 		// j = 61
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 5);
-		state_bs[61] = cpy_bs_bit(state_bs[61], i, bit_value);
+		state_bs[61] = cpy_bs_bit(state_bs[61], i, (bs_reg_t)get_reg_bit(*ptr, 5));
 
 		// j = 62
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 6);
-		state_bs[62] = cpy_bs_bit(state_bs[62], i, bit_value);
+		state_bs[62] = cpy_bs_bit(state_bs[62], i, (bs_reg_t)get_reg_bit(*ptr, 6));
 
 		// j = 63
-		bit_value = (bs_reg_t)get_reg_bit(*ptr, 7);
-		state_bs[63] = cpy_bs_bit(state_bs[63], i, bit_value);
+		state_bs[63] = cpy_bs_bit(state_bs[63], i, (bs_reg_t)get_reg_bit(*ptr, 7));
 		++ptr;
 	}
 }
@@ -367,274 +299,210 @@ static void enslice(const uint8_t pt[CRYPTO_IN_SIZE * BITSLICE_WIDTH], bs_reg_t 
 static void unslice(const bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT], uint8_t pt[CRYPTO_IN_SIZE * BITSLICE_WIDTH])
 {
 	uint8_t *ptr = pt; // initialise write only ptr for pt array
-	bs_reg_t bit_value;
 
 	for (uint32_t i = 0; i < BITSLICE_WIDTH; ++i) {
 		// j = 0
-		bit_value = (uint8_t)get_bs_bit(state_bs[0], i); // get bit from byte indicated by bitsliced array
 		*ptr = cpy_reg_bit(*ptr, 0, (uint8_t)get_bs_bit(state_bs[0], i));  // get bit from byte indicated by bitsliced array & set bit from byte indicated by ptr array
 
 		// j = 1
-		bit_value = (uint8_t)get_bs_bit(state_bs[1], i);
-		*ptr = cpy_reg_bit(*ptr, 1, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 1, (uint8_t)get_bs_bit(state_bs[1], i));
 
 		// j = 2
-		bit_value = (uint8_t)get_bs_bit(state_bs[2], i);
-		*ptr = cpy_reg_bit(*ptr, 2, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 2, (uint8_t)get_bs_bit(state_bs[2], i));
 
 		// j = 3
-		bit_value = (uint8_t)get_bs_bit(state_bs[3], i);
-		*ptr = cpy_reg_bit(*ptr, 3, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 3, (uint8_t)get_bs_bit(state_bs[3], i));
 
 		// j = 4
-		bit_value = (uint8_t)get_bs_bit(state_bs[4], i);
-		*ptr = cpy_reg_bit(*ptr, 4, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 4, (uint8_t)get_bs_bit(state_bs[4], i));
 
 		// j = 5
-		bit_value = (uint8_t)get_bs_bit(state_bs[5], i);
-		*ptr = cpy_reg_bit(*ptr, 5, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 5, (uint8_t)get_bs_bit(state_bs[5], i));
 
 		// j = 6
-		bit_value = (uint8_t)get_bs_bit(state_bs[6], i);
-		*ptr = cpy_reg_bit(*ptr, 6, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 6, (uint8_t)get_bs_bit(state_bs[6], i));
 
 		// j = 7
-		bit_value = (uint8_t)get_bs_bit(state_bs[7], i);
-		*ptr = cpy_reg_bit(*ptr, 7, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 7, (uint8_t)get_bs_bit(state_bs[7], i));
 		++ptr;
 
 		// j = 8
-		bit_value = (uint8_t)get_bs_bit(state_bs[8], i);
-		*ptr = cpy_reg_bit(*ptr, 0, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 0, (uint8_t)get_bs_bit(state_bs[8], i));
 
 		// j = 9
-		bit_value = (uint8_t)get_bs_bit(state_bs[9], i);
-		*ptr = cpy_reg_bit(*ptr, 1, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 1, (uint8_t)get_bs_bit(state_bs[9], i));
 
 		// j = 10
-		bit_value = (uint8_t)get_bs_bit(state_bs[10], i);
-		*ptr = cpy_reg_bit(*ptr, 2, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 2, (uint8_t)get_bs_bit(state_bs[10], i));
 
 		// j = 11
-		bit_value = (uint8_t)get_bs_bit(state_bs[11], i);
-		*ptr = cpy_reg_bit(*ptr, 3, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 3, (uint8_t)get_bs_bit(state_bs[11], i));
 
 		// j = 12
-		bit_value = (uint8_t)get_bs_bit(state_bs[12], i);
-		*ptr = cpy_reg_bit(*ptr, 4, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 4, (uint8_t)get_bs_bit(state_bs[12], i));
 
 		// j = 13
-		bit_value = (uint8_t)get_bs_bit(state_bs[13], i);
-		*ptr = cpy_reg_bit(*ptr, 5, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 5, (uint8_t)get_bs_bit(state_bs[13], i));
 
 		// j = 14
-		bit_value = (uint8_t)get_bs_bit(state_bs[14], i);
-		*ptr = cpy_reg_bit(*ptr, 6, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 6, (uint8_t)get_bs_bit(state_bs[14], i));
 
 		// j = 15
-		bit_value = (uint8_t)get_bs_bit(state_bs[15], i);
-		*ptr = cpy_reg_bit(*ptr, 7, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 7, (uint8_t)get_bs_bit(state_bs[15], i));
 		++ptr;
 
 		// j = 16
-		bit_value = (uint8_t)get_bs_bit(state_bs[16], i);
-		*ptr = cpy_reg_bit(*ptr, 0, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 0, (uint8_t)get_bs_bit(state_bs[16], i));
 
 		// j = 17
-		bit_value = (uint8_t)get_bs_bit(state_bs[17], i);
-		*ptr = cpy_reg_bit(*ptr, 1, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 1, (uint8_t)get_bs_bit(state_bs[17], i));
 
 		// j = 18
-		bit_value = (uint8_t)get_bs_bit(state_bs[18], i);
-		*ptr = cpy_reg_bit(*ptr, 2, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 2, (uint8_t)get_bs_bit(state_bs[18], i));
 
 		// j = 19
-		bit_value = (uint8_t)get_bs_bit(state_bs[19], i);
-		*ptr = cpy_reg_bit(*ptr, 3, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 3, (uint8_t)get_bs_bit(state_bs[19], i));
 
 		// j = 20
-		bit_value = (uint8_t)get_bs_bit(state_bs[20], i);
-		*ptr = cpy_reg_bit(*ptr, 4, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 4, (uint8_t)get_bs_bit(state_bs[20], i));
 
 		// j = 21
-		bit_value = (uint8_t)get_bs_bit(state_bs[21], i);
-		*ptr = cpy_reg_bit(*ptr, 5, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 5, (uint8_t)get_bs_bit(state_bs[21], i));
 
 		// j = 22
-		bit_value = (uint8_t)get_bs_bit(state_bs[22], i);
-		*ptr = cpy_reg_bit(*ptr, 6, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 6, (uint8_t)get_bs_bit(state_bs[22], i));
 
 		// j = 23
-		bit_value = (uint8_t)get_bs_bit(state_bs[23], i);
-		*ptr = cpy_reg_bit(*ptr, 7, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 7, (uint8_t)get_bs_bit(state_bs[23], i));
 		++ptr;
 
 		// j = 24
-		bit_value = (uint8_t)get_bs_bit(state_bs[24], i);
-		*ptr = cpy_reg_bit(*ptr, 0, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 0, (uint8_t)get_bs_bit(state_bs[24], i));
 
 		// j = 25
-		bit_value = (uint8_t)get_bs_bit(state_bs[25], i);
-		*ptr = cpy_reg_bit(*ptr, 1, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 1, (uint8_t)get_bs_bit(state_bs[25], i));
 
 		// j = 26
-		bit_value = (uint8_t)get_bs_bit(state_bs[26], i);
-		*ptr = cpy_reg_bit(*ptr, 2, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 2, (uint8_t)get_bs_bit(state_bs[26], i));
 
 		// j = 27
-		bit_value = (uint8_t)get_bs_bit(state_bs[27], i);
-		*ptr = cpy_reg_bit(*ptr, 3, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 3, (uint8_t)get_bs_bit(state_bs[27], i));
 
 		// j = 28
-		bit_value = (uint8_t)get_bs_bit(state_bs[28], i);
-		*ptr = cpy_reg_bit(*ptr, 4, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 4, (uint8_t)get_bs_bit(state_bs[28], i));
 
 		// j = 29
-		bit_value = (uint8_t)get_bs_bit(state_bs[29], i);
-		*ptr = cpy_reg_bit(*ptr, 5, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 5, (uint8_t)get_bs_bit(state_bs[29], i));
 
 		// j = 30
-		bit_value = (uint8_t)get_bs_bit(state_bs[30], i);
-		*ptr = cpy_reg_bit(*ptr, 6, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 6, (uint8_t)get_bs_bit(state_bs[30], i));
 
 		// j = 31
-		bit_value = (uint8_t)get_bs_bit(state_bs[31], i);
-		*ptr = cpy_reg_bit(*ptr, 7, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 7, (uint8_t)get_bs_bit(state_bs[31], i));
 		++ptr;
 
 		// j = 32
-		bit_value = (uint8_t)get_bs_bit(state_bs[32], i);
-		*ptr = cpy_reg_bit(*ptr, 0, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 0, (uint8_t)get_bs_bit(state_bs[32], i));
 
 		// j = 33
-		bit_value = (uint8_t)get_bs_bit(state_bs[33], i);
-		*ptr = cpy_reg_bit(*ptr, 1, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 1, (uint8_t)get_bs_bit(state_bs[33], i));
 
 		// j = 34
-		bit_value = (uint8_t)get_bs_bit(state_bs[34], i);
-		*ptr = cpy_reg_bit(*ptr, 2, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 2, (uint8_t)get_bs_bit(state_bs[34], i));
 
 		// j = 35
-		bit_value = (uint8_t)get_bs_bit(state_bs[35], i);
-		*ptr = cpy_reg_bit(*ptr, 3, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 3, (uint8_t)get_bs_bit(state_bs[35], i));
 
 		// j = 36
-		bit_value = (uint8_t)get_bs_bit(state_bs[36], i);
-		*ptr = cpy_reg_bit(*ptr, 4, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 4, (uint8_t)get_bs_bit(state_bs[36], i));
 
 		// j = 37
-		bit_value = (uint8_t)get_bs_bit(state_bs[37], i);
-		*ptr = cpy_reg_bit(*ptr, 5, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 5, (uint8_t)get_bs_bit(state_bs[37], i));
 
 		// j = 38
-		bit_value = (uint8_t)get_bs_bit(state_bs[38], i);
-		*ptr = cpy_reg_bit(*ptr, 6, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 6, (uint8_t)get_bs_bit(state_bs[38], i));
 
 		// j = 39
-		bit_value = (uint8_t)get_bs_bit(state_bs[39], i);
-		*ptr = cpy_reg_bit(*ptr, 7, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 7, (uint8_t)get_bs_bit(state_bs[39], i));
 		++ptr;
 
 		// j = 40
-		bit_value = (uint8_t)get_bs_bit(state_bs[40], i);
-		*ptr = cpy_reg_bit(*ptr, 0, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 0, (uint8_t)get_bs_bit(state_bs[40], i));
 
 		// j = 41
-		bit_value = (uint8_t)get_bs_bit(state_bs[41], i);
-		*ptr = cpy_reg_bit(*ptr, 1, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 1, (uint8_t)get_bs_bit(state_bs[41], i));
 
 		// j = 42
-		bit_value = (uint8_t)get_bs_bit(state_bs[42], i);
-		*ptr = cpy_reg_bit(*ptr, 2, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 2, (uint8_t)get_bs_bit(state_bs[42], i));
 
 		// j = 43
-		bit_value = (uint8_t)get_bs_bit(state_bs[43], i);
-		*ptr = cpy_reg_bit(*ptr, 3, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 3, (uint8_t)get_bs_bit(state_bs[43], i));
 
 		// j = 44
-		bit_value = (uint8_t)get_bs_bit(state_bs[44], i);
-		*ptr = cpy_reg_bit(*ptr, 4, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 4, (uint8_t)get_bs_bit(state_bs[44], i));
 
 		// j = 45
-		bit_value = (uint8_t)get_bs_bit(state_bs[45], i);
-		*ptr = cpy_reg_bit(*ptr, 5, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 5, (uint8_t)get_bs_bit(state_bs[45], i));
 
 		// j = 46
-		bit_value = (uint8_t)get_bs_bit(state_bs[46], i);
-		*ptr = cpy_reg_bit(*ptr, 6, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 6, (uint8_t)get_bs_bit(state_bs[46], i));
 
 		// j = 47
-		bit_value = (uint8_t)get_bs_bit(state_bs[47], i);
-		*ptr = cpy_reg_bit(*ptr, 7, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 7, (uint8_t)get_bs_bit(state_bs[47], i));
 		++ptr;
 
 		// j = 48
-		bit_value = (uint8_t)get_bs_bit(state_bs[48], i);
-		*ptr = cpy_reg_bit(*ptr, 0, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 0, (uint8_t)get_bs_bit(state_bs[48], i));
 
 		// j = 49
-		bit_value = (uint8_t)get_bs_bit(state_bs[49], i);
-		*ptr = cpy_reg_bit(*ptr, 1, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 1, (uint8_t)get_bs_bit(state_bs[49], i));
 
 		// j = 50
-		bit_value = (uint8_t)get_bs_bit(state_bs[50], i);
-		*ptr = cpy_reg_bit(*ptr, 2, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 2, (uint8_t)get_bs_bit(state_bs[50], i));
 
 		// j = 51
-		bit_value = (uint8_t)get_bs_bit(state_bs[51], i);
-		*ptr = cpy_reg_bit(*ptr, 3, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 3, (uint8_t)get_bs_bit(state_bs[51], i));
 
 		// j = 52
-		bit_value = (uint8_t)get_bs_bit(state_bs[52], i);
-		*ptr = cpy_reg_bit(*ptr, 4, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 4, (uint8_t)get_bs_bit(state_bs[52], i));
 
 		// j = 53
-		bit_value = (uint8_t)get_bs_bit(state_bs[53], i);
-		*ptr = cpy_reg_bit(*ptr, 5, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 5, (uint8_t)get_bs_bit(state_bs[53], i));
 
 		// j = 54
-		bit_value = (uint8_t)get_bs_bit(state_bs[54], i);
-		*ptr = cpy_reg_bit(*ptr, 6, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 6, (uint8_t)get_bs_bit(state_bs[54], i));
 
 		// j = 55
-		bit_value = (uint8_t)get_bs_bit(state_bs[55], i);
-		*ptr = cpy_reg_bit(*ptr, 7, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 7, (uint8_t)get_bs_bit(state_bs[55], i));
 		++ptr;
 
 		// j = 56
-		bit_value = (uint8_t)get_bs_bit(state_bs[56], i);
-		*ptr = cpy_reg_bit(*ptr, 0, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 0, (uint8_t)get_bs_bit(state_bs[56], i));
 
 		// j = 57
-		bit_value = (uint8_t)get_bs_bit(state_bs[57], i);
-		*ptr = cpy_reg_bit(*ptr, 1, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 1, (uint8_t)get_bs_bit(state_bs[57], i));
 
 		// j = 58
-		bit_value = (uint8_t)get_bs_bit(state_bs[58], i);
-		*ptr = cpy_reg_bit(*ptr, 2, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 2, (uint8_t)get_bs_bit(state_bs[58], i));
 
 		// j = 59
-		bit_value = (uint8_t)get_bs_bit(state_bs[59], i);
-		*ptr = cpy_reg_bit(*ptr, 3, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 3, (uint8_t)get_bs_bit(state_bs[59], i));
 
 		// j = 60
-		bit_value = (uint8_t)get_bs_bit(state_bs[60], i);
-		*ptr = cpy_reg_bit(*ptr, 4, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 4, (uint8_t)get_bs_bit(state_bs[60], i));
 
 		// j = 61
-		bit_value = (uint8_t)get_bs_bit(state_bs[61], i);
-		*ptr = cpy_reg_bit(*ptr, 5, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 5, (uint8_t)get_bs_bit(state_bs[61], i));
 
 		// j = 62
-		bit_value = (uint8_t)get_bs_bit(state_bs[62], i);
-		*ptr = cpy_reg_bit(*ptr, 6, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 6, (uint8_t)get_bs_bit(state_bs[62], i));
 
 		// j = 63
-		bit_value = (uint8_t)get_bs_bit(state_bs[63], i);
-		*ptr = cpy_reg_bit(*ptr, 7, bit_value);
+		*ptr = cpy_reg_bit(*ptr, 7, (uint8_t)get_bs_bit(state_bs[63], i));
 		++ptr;
 	}
 }
+
 
 /**
  * @brief add_round_key - performs the XOR operation between the plaintext (pt) and round key (roundkey) byte-by-byte
@@ -1103,7 +971,7 @@ static void pbox_layer(bs_reg_t state_bs[CRYPTO_IN_SIZE_BIT])
 	state_out[47] = state_bs[62];
 //	state_out[63] = state_bs[63]; // not needed
 
-	memcpy(state_bs, state_out, CRYPTO_IN_SIZE_BIT * sizeof(bs_reg_t));
+	memcpy(state_bs, state_out, 2048);
 }
 
 /**

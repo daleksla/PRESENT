@@ -5,7 +5,7 @@
 
 /**
  * @brief Bitsliced implementation of PRESENT cryptographic algorithm
- * Written to be a clean implementation using code sources provided, not focused on optimisations - see crypto_op.c for one which cares strictly about performance
+ * @note Written to be a clean implementation using code sources provided, not focused on optimisations - see crypto_op.c for one which cares strictly about performance
  * @authors Doaa A., Dnyaneshwar S., Salih MSA
  */
 
