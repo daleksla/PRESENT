@@ -53,56 +53,28 @@ static inline uint8_t get_bs_bit(const bs_reg_t s, const uint8_t i)
 	return (s >> (i)) & 0x1; // right-shift and mask
 }
 
-///**
-// * @brief cpy_reg_bit - inlined method to copy the bit value val into the bit position pos of the byte out
-// * @param const uint8_t out - pointer to byte to modify
-// * @param const uint8_t pos - bit position of `out` to modify
-// * @param const uint8_t val - bit values to set
-// * @return uint8_t - modified byte
-// */
-//static inline uint8_t cpy_reg_bit(const uint8_t out, const uint8_t pos, const uint8_t val)
-//{
-//	return (out & ~(1 << (pos))) | ((val) << (pos)); // Clear bit pos in out and set bit pos in out to val
-//}
-//
-///**
-// * @brief cpy_bs_bit - inlined method to copy the bit value val into the bit position pos of the uint32_t out
-// * @param const bs_reg_t out - pointer to value to modify
-// * @param const uint8_t pos - bit position of `out` to modify
-// * @param const bs_reg_t val - bit values to set
-// * @return bs_reg_t - modified value
-// */
-//static inline bs_reg_t cpy_bs_bit(const bs_reg_t out, const uint8_t pos, const bs_reg_t val)
-//{
-//	return (out & ~(1 << (pos))) | ((val) << (pos)); // Clear bit pos in out and set bit pos in out to val
-//}
-
 /**
  * @brief cpy_reg_bit - inlined method to copy the bit value val into the bit position pos of the byte out
- * @param uint8_t out - pointer to byte to modify
+ * @param const uint8_t out - pointer to byte to modify
  * @param const uint8_t pos - bit position of `out` to modify
  * @param const uint8_t val - bit values to set
  * @return uint8_t - modified byte
  */
-static inline uint8_t cpy_reg_bit(uint8_t out, const uint8_t pos, const uint8_t val)
+static inline uint8_t cpy_reg_bit(const uint8_t out, const uint8_t pos, const uint8_t val)
 {
-	out &= ~(1 << (pos)); // Clear bit pos in out
-	out |= ((val) << (pos)); // Set bit pos in out to val
-	return out;
+	return (out & ~(1 << (pos))) | ((val) << (pos)); // Clear bit pos in out and set bit pos in out to val
 }
 
 /**
  * @brief cpy_bs_bit - inlined method to copy the bit value val into the bit position pos of the uint32_t out
- * @param uint8_t out - pointer to byte to modify
+ * @param const bs_reg_t out - pointer to value to modify
  * @param const uint8_t pos - bit position of `out` to modify
  * @param const bs_reg_t val - bit values to set
  * @return bs_reg_t - modified value
  */
-static inline bs_reg_t cpy_bs_bit(bs_reg_t out, const uint8_t pos, const bs_reg_t val)
+static inline bs_reg_t cpy_bs_bit(const bs_reg_t out, const uint8_t pos, const bs_reg_t val)
 {
-	out &= ~(1 << (pos)); // Clear bit pos in out
-	out |= ((val) << (pos)); // Set bit pos in out to val
-	return out;
+	return (out & ~(1 << (pos))) | ((val) << (pos)); // Clear bit pos in out and set bit pos in out to val
 }
 
 /**
